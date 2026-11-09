@@ -6,9 +6,9 @@ Most "Dynamic Island for Windows" projects add an overlay on top of the taskbar.
 a notch at the top for media and quick settings, a magnifying dock at the bottom, and a matching
 system icon theme for Explorer. Native WPF / .NET 10, no Electron, ~0 setup.
 
-![Notch](docs/notch.png)
+![Notch expanding on hover](docs/notch.gif)
 
-![Dock](docs/dock.png)
+![Dock magnification](docs/dock.gif)
 
 ## Features
 
