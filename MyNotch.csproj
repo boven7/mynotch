@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- Windows TFM is required for WinRT APIs: global media controls (GSMTC) and Wi-Fi/Bluetooth radios -->
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyTitle>MyNotch</AssemblyTitle>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- WPF excludes System.IO from implicit usings (Path clashes with System.Windows.Shapes.Path) -->
+    <Using Include="System.IO" />
+    <Resource Include="Fonts\*.ttf" />
+    <Compile Remove="backup\**" />
+    <None Remove="backup\**" />
+    <!-- WMI for laptop screen brightness -->
+    <PackageReference Include="System.Management" Version="10.0.0" />
+  </ItemGroup>
+
+</Project>

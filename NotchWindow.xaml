@@ -1,0 +1,251 @@
+<Window x:Class="MyNotch.NotchWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MyNotch" Width="480" Height="280" Top="8"
+        WindowStyle="None" AllowsTransparency="True" ResizeMode="NoResize" Background="Transparent"
+        ShowInTaskbar="False" Topmost="True" ShowActivated="False"
+        FontFamily="{StaticResource UiFont}">
+    <!-- Layered window: fully transparent pixels pass clicks through. Pill is clipped to a pill shape (see UpdateShape).
+         Alpha-1 background so the whole pill still catches the mouse at 0% tint. -->
+    <Border x:Name="Pill" Width="200" Height="34" VerticalAlignment="Top" HorizontalAlignment="Center"
+            Background="#01000000"
+            MouseEnter="Pill_MouseEnter" MouseLeave="Pill_MouseLeave">
+        <Grid>
+            <!-- Glass layer: blurred screen capture, then a dark/light tint -->
+            <Canvas IsHitTestVisible="False"><Image x:Name="BackdropImage"/></Canvas> <!-- Canvas: image size doesn't affect layout -->
+            <Border x:Name="Tint" IsHitTestVisible="False"/>
+            <!-- Collapsed: track title (while playing), clock, battery -->
+            <Grid x:Name="Compact" Margin="16,0">
+                <TextBlock x:Name="CompactTrack" HorizontalAlignment="Left" VerticalAlignment="Center" MaxWidth="58"
+                           TextTrimming="CharacterEllipsis" Foreground="{DynamicResource IslandFgDim}" FontSize="11"/>
+                <TextBlock x:Name="CompactClock" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           Foreground="{DynamicResource IslandFg}" FontWeight="SemiBold" FontSize="13"/>
+                <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Ellipse x:Name="PlayingDot" Width="6" Height="6" Margin="0,0,6,0"
+                             Fill="{DynamicResource AccentBrush}" Visibility="Collapsed"/>
+                    <StackPanel x:Name="CompactBattery" Orientation="Horizontal" Visibility="Collapsed">
+                        <TextBlock x:Name="ChargingIcon" FontFamily="{StaticResource Icons}" Text="&#xE945;" FontSize="10"
+                                   Foreground="#30D158" VerticalAlignment="Center" Margin="0,0,2,0" Visibility="Collapsed"/>
+                        <TextBlock x:Name="BatteryPct" Foreground="{DynamicResource IslandFg}" FontSize="11" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+
+            <!-- Expanded -->
+            <Grid x:Name="Expanded" Margin="18,10,18,14" Opacity="0" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Grid>
+                    <Button Style="{StaticResource IconButton}" Width="26" Height="26" FontSize="13"
+                            HorizontalAlignment="Left" Content="&#xE7E8;" ToolTip="Quit MyNotch (restores the taskbar)" Click="Power_Click"/>
+                    <TextBlock x:Name="HeaderClock" Foreground="{DynamicResource IslandFgDim}" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Button x:Name="GearBtn" Style="{StaticResource IconButton}" Width="26" Height="26" FontSize="13"
+                            HorizontalAlignment="Right" Content="&#xE713;" ToolTip="Appearance settings" Click="Gear_Click"/>
+                </Grid>
+
+                <!-- Main panel -->
+                <StackPanel x:Name="MainPanel" Grid.Row="1">
+                    <Grid Margin="0,6,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="56"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Border x:Name="Art" Width="56" Height="56" CornerRadius="12" Background="{DynamicResource IslandSoft}"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0">
+                            <TextBlock x:Name="TrackTitle" Text="Nothing playing" Foreground="{DynamicResource IslandFg}" FontWeight="SemiBold"
+                                       FontSize="14" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="TrackArtist" Foreground="{DynamicResource IslandFgDim}" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Style="{StaticResource IconButton}" Content="&#xE892;" ToolTip="Previous" Click="Prev_Click"/>
+                            <Button x:Name="PlayBtn" Style="{StaticResource IconButton}" Content="&#xE768;" FontSize="20" ToolTip="Play/Pause" Click="Play_Click"/>
+                            <Button Style="{StaticResource IconButton}" Content="&#xE893;" ToolTip="Next" Click="Next_Click"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                        <ToggleButton x:Name="WifiToggle" Style="{StaticResource ToggleChip}" Content="&#xE701;" ToolTip="Wi-Fi" Click="Wifi_Click"/>
+                        <ToggleButton x:Name="BtToggle" Style="{StaticResource ToggleChip}" Content="&#xE702;" ToolTip="Bluetooth" Click="Bt_Click"/>
+                        <ToggleButton x:Name="DarkToggle" Style="{StaticResource ToggleChip}" Content="&#xE708;" ToolTip="Dark mode (Explorer &amp; all apps)" Click="Dark_Click"/>
+                        <Rectangle Width="1" Height="22" Fill="{DynamicResource IslandTrack}" Margin="4,0,12,0"/>
+                        <StackPanel x:Name="Swatches" Orientation="Horizontal" VerticalAlignment="Center" ToolTip="Windows accent color"/>
+                    </StackPanel>
+
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button x:Name="MuteBtn" Style="{StaticResource IconButton}" Width="30" Height="30" Content="&#xE767;" ToolTip="Mute" Click="Mute_Click"/>
+                        <Slider x:Name="VolumeSlider" Grid.Column="1" Style="{StaticResource ThinSlider}" Margin="4,0,16,0" ValueChanged="Volume_Changed"/>
+                        <TextBlock x:Name="BrightIcon" Grid.Column="2" FontFamily="{StaticResource Icons}" Text="&#xE706;" Foreground="{DynamicResource IslandFg}"
+                                   FontSize="16" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <Slider x:Name="BrightSlider" Grid.Column="3" Style="{StaticResource ThinSlider}" ValueChanged="Bright_Changed"/>
+                    </Grid>
+                </StackPanel>
+
+                <!-- Wi-Fi panel: switch + network list + password -->
+                <Grid x:Name="WifiPanel" Grid.Row="1" Visibility="Collapsed" Margin="0,4,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Style="{StaticResource IconButton}" Width="28" Height="28" FontSize="12" Content="&#xE72B;" ToolTip="Back" Click="WifiBack_Click"/>
+                            <TextBlock Text="Wi-Fi" Foreground="{DynamicResource IslandFg}" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <Button Style="{StaticResource IconButton}" Width="28" Height="28" FontSize="12" Content="&#xE72C;" ToolTip="Rescan" Click="WifiRefresh_Click"/>
+                            <ToggleButton x:Name="WifiPower" Style="{StaticResource TextChip}" Content="On" Margin="6,0,0,0" Click="WifiPower_Click"/>
+                        </StackPanel>
+                    </Grid>
+                    <Grid Grid.Row="1" Margin="0,6,0,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
+                            <ItemsControl x:Name="WifiList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource RowButton}" Tag="{Binding}" Click="WifiNetwork_Click">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="28"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="22"/>
+                                                    <ColumnDefinition Width="22"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock FontFamily="{StaticResource Icons}" Text="{Binding SignalGlyph}" FontSize="14" Foreground="{DynamicResource IslandFg}" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Ssid}" FontSize="13" Foreground="{DynamicResource IslandFg}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="2" FontFamily="{StaticResource Icons}" Text="&#xE72E;" FontSize="12" Foreground="{DynamicResource IslandFgDim}" Visibility="{Binding LockVisibility}" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="3" FontFamily="{StaticResource Icons}" Text="&#xE73E;" FontSize="13" Foreground="{DynamicResource AccentBrush}" Visibility="{Binding CheckVisibility}" VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="True">
+                            <TextBlock x:Name="WifiStatus" Foreground="{DynamicResource IslandFgDim}" FontSize="12" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="360" Visibility="Collapsed"/>
+                            <Button x:Name="WifiLocationBtn" Style="{StaticResource AccentButton}" Content="Open location settings" Margin="0,8,0,0" HorizontalAlignment="Center" Visibility="Collapsed" Click="WifiLocation_Click"/>
+                        </StackPanel>
+                    </Grid>
+                    <Grid x:Name="WifiPasswordRow" Grid.Row="2" Margin="0,6,0,0" Visibility="Collapsed">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <PasswordBox x:Name="WifiPassword" Height="30" Padding="10,0" VerticalContentAlignment="Center" FontSize="13"
+                                     Background="{DynamicResource IslandSoft}" Foreground="{DynamicResource IslandFg}" CaretBrush="{DynamicResource IslandFg}"
+                                     BorderBrush="{DynamicResource IslandTrack}" BorderThickness="1" KeyDown="WifiPassword_KeyDown"/>
+                        <Button Grid.Column="1" Style="{StaticResource AccentButton}" Content="Connect" Margin="8,0,0,0" Click="WifiConnect_Click"/>
+                    </Grid>
+                </Grid>
+
+                <!-- Bluetooth panel: switch + paired devices (click = connect/disconnect) -->
+                <Grid x:Name="BtPanel" Grid.Row="1" Visibility="Collapsed" Margin="0,4,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Style="{StaticResource IconButton}" Width="28" Height="28" FontSize="12" Content="&#xE72B;" ToolTip="Back" Click="BtBack_Click"/>
+                            <TextBlock Text="Bluetooth" Foreground="{DynamicResource IslandFg}" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <Button Style="{StaticResource IconButton}" Width="28" Height="28" FontSize="12" Content="&#xE710;" ToolTip="Add device (Windows Settings)" Click="BtAdd_Click"/>
+                            <Button Style="{StaticResource IconButton}" Width="28" Height="28" FontSize="12" Content="&#xE72C;" ToolTip="Refresh" Click="BtRefresh_Click"/>
+                            <ToggleButton x:Name="BtPower" Style="{StaticResource TextChip}" Content="On" Margin="6,0,0,0" Click="BtPower_Click"/>
+                        </StackPanel>
+                    </Grid>
+                    <Grid Grid.Row="1" Margin="0,6,0,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
+                            <ItemsControl x:Name="BtList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource RowButton}" Height="40" Tag="{Binding}" Click="BtDevice_Click">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="28"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="22"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock FontFamily="{StaticResource Icons}" Text="{Binding Glyph}" FontSize="14" Foreground="{DynamicResource IslandFg}" VerticalAlignment="Center"/>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Name}" FontSize="13" Foreground="{DynamicResource IslandFg}" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding Status}" FontSize="11" Foreground="{DynamicResource IslandFgDim}" TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="2" FontFamily="{StaticResource Icons}" Text="&#xE73E;" FontSize="13" Foreground="{DynamicResource AccentBrush}" Visibility="{Binding CheckVisibility}" VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                        <TextBlock x:Name="BtStatus" Foreground="{DynamicResource IslandFgDim}" FontSize="12" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="360"
+                                   VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed"/>
+                    </Grid>
+                </Grid>
+
+                <!-- Appearance settings panel -->
+                <Grid x:Name="SettingsPanel" Grid.Row="1" Visibility="Collapsed" Margin="0,4,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="74"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="40"/>
+                        <RowDefinition Height="40"/>
+                        <RowDefinition Height="40"/>
+                        <RowDefinition Height="40"/>
+                        <RowDefinition Height="40"/>
+                    </Grid.RowDefinitions>
+                    <Grid.Resources>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource IslandFgDim}"/>
+                            <Setter Property="FontSize" Value="12"/>
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                        </Style>
+                    </Grid.Resources>
+
+                    <TextBlock Text="Style"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ToggleButton x:Name="StyleSolid" Style="{StaticResource TextChip}" Content="Solid" Tag="Solid" Click="Style_Click"/>
+                        <ToggleButton x:Name="StyleTransparent" Style="{StaticResource TextChip}" Content="Transparent" Tag="Transparent" Click="Style_Click"/>
+                        <ToggleButton x:Name="StyleBlur" Style="{StaticResource TextChip}" Content="Glass blur" Tag="Blur" Click="Style_Click"/>
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="1" Text="Opacity"/>
+                    <Slider x:Name="OpacitySlider" Grid.Row="1" Grid.Column="1" Style="{StaticResource ThinSlider}" Margin="0,0,8,0" ValueChanged="Opacity_Changed"/>
+
+                    <TextBlock Grid.Row="2" Text="Position"/>
+                    <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ToggleButton x:Name="PosFloat" Style="{StaticResource TextChip}" Content="Floating" Click="PosFloat_Click"/>
+                        <ToggleButton x:Name="PosAttach" Style="{StaticResource TextChip}" Content="Attached" Click="PosAttach_Click"/>
+                        <ToggleButton x:Name="MagnifyChip" Style="{StaticResource TextChip}" Content="Dock zoom" Click="Magnify_Click"/>
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="3" Text="Windows"/>
+                    <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ToggleButton x:Name="WinAccent" Style="{StaticResource TextChip}" Content="Window accent" ToolTip="Accent color on title bars &amp; borders of Explorer and all apps" Click="WinAccent_Click"/>
+                        <ToggleButton x:Name="WinTransparency" Style="{StaticResource TextChip}" Content="Transparency" ToolTip="Windows transparency effects" Click="WinTransparency_Click"/>
+                        <ToggleButton x:Name="ShotChip" Style="{StaticResource TextChip}" Content="In screenshots"
+                                      ToolTip="Show notch &amp; dock in screenshots/recordings (glass blur becomes transparent)" Click="Shot_Click"/>
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="4" Text="Icons"/>
+                    <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ToggleButton x:Name="IconsChip" Style="{StaticResource TextChip}" Content="macOS-style icons"
+                                      ToolTip="Folder, This PC, drive, Network and Recycle Bin icons, plus Start &amp; Explorer in the dock (needs admin)" Click="Icons_Click"/>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
