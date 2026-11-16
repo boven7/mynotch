@@ -18,7 +18,7 @@
     <Compile Remove="backup\**" />
     <None Remove="backup\**" />
     <!-- WMI for laptop screen brightness -->
-    <PackageReference Include="System.Management" Version="10.0.0" />
+    <PackageReference Include="System.Management" Version="11.0.0" />
   </ItemGroup>
 
 </Project>
